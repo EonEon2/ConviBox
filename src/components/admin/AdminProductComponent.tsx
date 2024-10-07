@@ -8,6 +8,7 @@ import React, { useState } from 'react';
 import LoadingComponent from "../../common/LoadingComponent.tsx";
 import AddCompleteComponent from "../../common/AddCompleteComponent.tsx";
 
+
 function AdminProductComponent() {
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -24,6 +25,7 @@ function AdminProductComponent() {
 
     const [loading, setLoading] = useState(false);
     const [resultData, setResultData] = useState<string>('');
+    const [modalOpen, setModalOpen] = useState(false);
 
 
     const handleClickMoveAdd = () => {
@@ -62,39 +64,48 @@ function AdminProductComponent() {
         formData.append("price", price.toString()); // 가격 추가
 
         if (image) {
+
             formData.append("files", image); // 파일 추가
+        } else {
+            // public 폴더에서 기본 이미지 로드
+            fetch('/no_Image.png') // public 폴더의 경로를 적어주세요
+                .then(response => {
+                    return response.blob(); // Blob으로 변환
+                })
+                .then(blob => {
+                    // Blob을 File 객체로 변환
+                    const defaultImageFile = new File([blob], 'no_Image.png', { type: 'image/png' });
+                    formData.append("files", defaultImageFile); // 기본 이미지 파일 추가
+
+                    // 이제 여기서 API 호출을 진행
+                    return modifyOne(formData, pno); // API 호출
+                })
+                .then(() => {
+                    setLoading(false); // 로딩 종료
+                })
+                .catch(error => {
+                    console.error("수정 실패:", error);
+                    setLoading(false); // 오류 발생 시 로딩 종료
+                });
         }
 
         modifyOne(formData, pno).then(() => {
 
             setResultData(pno +'번이 수정 되었습니다.')
+            setModalOpen(true);
 
-            setTimeout(() => {
-                setLoading(false);
-                window.location.reload();
-            }, 300)
-
+            setLoading(false);
         });
     };
 
     const handleClickRemove = () => {
-        console.log(pno);
-        // 실제 삭제 API 호출
-
-        setTimeout(() => {
-
-            setLoading(false);
-        }, 300)
 
         deleteOne(pno).then(data => {
             console.log(data);
             setResultData(pno +'번이 삭제 되었습니다.')
+            setModalOpen(true)
 
-
-            setTimeout(() => {
-                setLoading(false)
-                window.location.reload();
-            },2000)
+            setLoading(false)
 
         }).catch(error => {
             console.error("삭제 실패:", error);
@@ -104,21 +115,18 @@ function AdminProductComponent() {
 
     const closeCallback = () => {
 
-
         setResultData('')
+        setModalOpen(false);
 
-        navigate({ pathname: '/admin/management' });
-
+        window.location.reload();
     }
-
-
 
 
     return (
 
         <>
             {loading && <LoadingComponent></LoadingComponent>}
-            {resultData && <AddCompleteComponent message={resultData} onClick={closeCallback}/>}
+            {modalOpen && <AddCompleteComponent message={resultData} onClick={closeCallback}/>}
             <div className="w-2/3 p-4 h-full">
                 {/* 상단 버튼 */}
                 <div className="flex justify-between items-center mb-4">
