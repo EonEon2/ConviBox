@@ -94,7 +94,7 @@ function AdminProductComponent() {
             setTimeout(() => {
                 setLoading(false)
                 window.location.reload();
-            },600)
+            },2000)
 
         }).catch(error => {
             console.error("삭제 실패:", error);
